@@ -304,7 +304,7 @@ const Home = () => {
           Remove $3
         </button>
         <button 
-          className="bg-gray-300 border border-gray-400 rounded px-4 py-2 text-sm disabled:opacity-50 mb-20" 
+          className="bg-gray-300 border border-gray-400 rounded px-4 py-2 text-sm disabled:opacity-50 mb-26" 
           onClick={resetMoney}
           disabled={loading}
         >
