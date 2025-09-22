@@ -24,15 +24,26 @@ const Home = () => {
 
   const getStartOfWeek = (date) => {
     const d = new Date(date);
+    // Use local time instead of UTC to avoid timezone issues
+    d.setHours(0, 0, 0, 0); // Set to start of day
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
-    return new Date(d.setDate(diff));
+    const startOfWeek = new Date(d);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0); // Ensure start of day
+    return startOfWeek;
   };
 
   const getDateKey = (dayIndex, slot) => {
     const date = new Date(currentWeekStart);
+    date.setHours(0, 0, 0, 0); // Ensure consistent time
     date.setDate(date.getDate() + dayIndex);
-    return `${date.toISOString().split('T')[0]}_${slot.toLowerCase()}`;
+    // Use local date string format instead of ISO to avoid UTC conversion
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    return `${dateStr}_${slot.toLowerCase()}`;
   };
 
   const loadMoneyFromDB = async () => {
@@ -60,14 +71,24 @@ const Home = () => {
     try {
       const targetWeek = weekStart || currentWeekStart;
       const startDate = new Date(targetWeek);
+      startDate.setHours(0, 0, 0, 0); // Ensure start of day
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999); // Ensure end of day
+
+      // Use local date strings instead of ISO to avoid UTC conversion
+      const formatLocalDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
 
       const { data, error } = await supabase
         .from('rides')
         .select('*')
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0]);
+        .gte('date', formatLocalDate(startDate))
+        .lte('date', formatLocalDate(endDate));
 
       if (error) {
         console.error('Error loading rides:', error);
@@ -92,8 +113,13 @@ const Home = () => {
 
   const toggleRide = async (dayIndex, slot) => {
     const date = new Date(currentWeekStart);
+    date.setHours(0, 0, 0, 0); // Ensure consistent time
     date.setDate(date.getDate() + dayIndex);
-    const dateStr = date.toISOString().split('T')[0];
+    // Use local date string format instead of ISO to avoid UTC conversion
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     const key = getDateKey(dayIndex, slot);
     const currentRides = rides[key] || 0;
     const newRides = currentRides === 0 ? 1 : 0;
@@ -304,7 +330,7 @@ const Home = () => {
           Remove $3
         </button>
         <button 
-          className="bg-gray-300 border border-gray-400 rounded px-4 py-2 text-sm disabled:opacity-50 mb-26" 
+          className="bg-gray-300 border border-gray-400 rounded px-4 py-2 text-sm disabled:opacity-50" 
           onClick={resetMoney}
           disabled={loading}
         >
